@@ -1,24 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   client.h                                           :+:    :+:            */
+/*   ft_putstr_fd.c                                     :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: jvan-kra <jvan-kra@student.42.fr>            +#+                     */
 /*                                                   +#+                      */
-/*   Created: 2021/12/16 15:36:02 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/01/25 17:53:14 by jvan-kra      ########   odam.nl         */
+/*   Created: 2021/10/19 15:44:27 by jvan-kra      #+#    #+#                 */
+/*   Updated: 2022/01/25 17:47:36 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CLIENT_H
-# define CLIENT_H
-# include <unistd.h>
-# include <signal.h>
-# include <limits.h>
-# include <stdlib.h>
+#include "server.h"
 
-void	ft_putstr_fd(char *s, int fd);
-int		ft_atoi_p(const char *str, int *number);
-void	ft_bzero(void *s, size_t n);
+size_t	ft_strlen(const char *s)
+{
+	size_t	i;
 
-#endif
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
+
+void	ft_putstr_fd(char *s, int fd)
+{
+	write(fd, s, ft_strlen(s));
+}

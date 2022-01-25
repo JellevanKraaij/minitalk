@@ -3,7 +3,8 @@
 *.out
 *.o
 *.a
-push_swap
+client
+server
 
 # OS generated files #
 ######################

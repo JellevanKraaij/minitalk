@@ -6,62 +6,78 @@
 /*   By: jvan-kra <jvan-kra@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/01/19 15:14:56 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/01/19 18:00:15 by jvan-kra      ########   odam.nl         */
+/*   Updated: 2022/01/25 17:56:51 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "client.h"
-#include <stdio.h>
 
-void	send_str(const char *str, pid_t pid)
+volatile int8_t	g_signal_received = 1;
+
+void	sendbyte(int pid, const char *str)
 {
-	int		bitcnt;
-	size_t	strcnt;
+	static const char	*_str;
+	static int			_pid;
+	static size_t		strcnt;
+	static int8_t		bitcnt;
 
-	strcnt = 0;
-	while (str[strcnt])
+	if (pid != 0)
+		_pid = pid;
+	if (str != NULL)
+		_str = str;
+	if (_str[strcnt] & 1 << bitcnt)
+		kill(_pid, SIGUSR2);
+	else
+		kill(_pid, SIGUSR1);
+	bitcnt++;
+	if (bitcnt > 7 && _str[strcnt] == '\0')
+	{
+		ft_putstr_fd("Message transmitted and received successfully!\n", \
+		STDOUT_FILENO);
+		exit(0);
+	}
+	if (bitcnt > 7)
 	{
 		bitcnt = 0;
-		while (bitcnt < 8)
-		{
-			if (str[strcnt] & 1 << bitcnt)
-				kill(pid, SIGUSR2);
-			else
-				kill(pid, SIGUSR1);
-			usleep(10);
-			bitcnt++;
-		}
 		strcnt++;
 	}
-	bitcnt = 0;
-	while (bitcnt < 8)
-	{
-		kill(pid, SIGUSR1);
-		bitcnt++;
-		usleep(10);
-	}
+}
+
+void	sighandler(int sigid)
+{
+	(void)sigid;
+	g_signal_received = 1;
+	sendbyte(0, NULL);
+}
+
+void	init_signals(void)
+{
+	struct sigaction	sigstruct;
+
+	ft_bzero(&sigstruct, sizeof(sigstruct));
+	sigstruct.sa_handler = sighandler;
+	sigaction(SIGUSR1, &sigstruct, NULL);
 }
 
 int	main(int argc, char **argv)
 {
 	size_t	i;
+	int		pid;
 
 	i = 0;
-	printf("cliendpid %d\n", getpid());
-	if (argc != 3)
+	if (argc != 3 || ft_atoi_p(argv[1], &pid) != 0)
 	{
-		ft_putstr_fd("input error", 2);
+		ft_putstr_fd("input error usage ./client [server pid] [string]\n", \
+		STDERR_FILENO);
 		exit(1);
 	}
-	while (argv[1][i])
+	init_signals();
+	sendbyte(pid, argv[2]);
+	while (g_signal_received == 1)
 	{
-		if (!ft_isdigit(argv[1][i]))
-		{
-			ft_putstr_fd("input error", 2);
-			exit(1);
-		}
-		i++;
+		g_signal_received = 0;
+		sleep(1);
 	}
-	printf("pid=%d\n", ft_atoi(argv[1]));
-	send_str(argv[2], ft_atoi(argv[1]));
+	ft_putstr_fd("error timeout occurred\n", STDERR_FILENO);
+	exit(1);
 }
