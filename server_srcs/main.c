@@ -6,7 +6,7 @@
 /*   By: jvan-kra <jvan-kra@student.42.fr>            +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2021/12/16 18:45:49 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/01/25 17:51:35 by jvan-kra      ########   odam.nl         */
+/*   Updated: 2022/01/25 21:36:02 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ void	sighandler(int signal, siginfo_t *info, void *context)
 		bitcnt = 0;
 		if (strcnt > BUFFER_SIZE - 1)
 		{
-			write(STDOUT_FILENO, (char *)g_recstr, strcnt);
+			write(STDOUT_FILENO, (char *)g_recstr, strcnt + 1);
 			strcnt = 0;
 		}
 		else if (g_recstr[strcnt] == 0)
@@ -46,7 +46,12 @@ void	sighandler(int signal, siginfo_t *info, void *context)
 		else
 			strcnt++;
 	}
-	kill(info->si_pid, SIGUSR1);
+	if (kill(info->si_pid, SIGUSR1) == -1)
+	{
+		ft_putstr_fd("pid error, check if pid is correct\n", STDERR_FILENO);
+		free(g_recstr);
+		exit(1);
+	}
 }
 
 void	printpid(char *filename)

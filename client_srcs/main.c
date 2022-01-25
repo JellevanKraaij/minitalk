@@ -6,13 +6,22 @@
 /*   By: jvan-kra <jvan-kra@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/01/19 15:14:56 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/01/25 17:56:51 by jvan-kra      ########   odam.nl         */
+/*   Updated: 2022/01/25 21:32:12 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "client.h"
 
 volatile int8_t	g_signal_received = 1;
+
+void	pidcheck(int check)
+{
+	if (check == -1)
+	{
+		ft_putstr_fd("pid error, check if pid is correct\n", STDERR_FILENO);
+		exit(1);
+	}
+}
 
 void	sendbyte(int pid, const char *str)
 {
@@ -26,9 +35,9 @@ void	sendbyte(int pid, const char *str)
 	if (str != NULL)
 		_str = str;
 	if (_str[strcnt] & 1 << bitcnt)
-		kill(_pid, SIGUSR2);
+		pidcheck(kill(_pid, SIGUSR2));
 	else
-		kill(_pid, SIGUSR1);
+		pidcheck(kill(_pid, SIGUSR1));
 	bitcnt++;
 	if (bitcnt > 7 && _str[strcnt] == '\0')
 	{
@@ -67,7 +76,9 @@ int	main(int argc, char **argv)
 	i = 0;
 	if (argc != 3 || ft_atoi_p(argv[1], &pid) != 0)
 	{
-		ft_putstr_fd("input error usage ./client [server pid] [string]\n", \
+		ft_putstr_fd("input error, usage ", STDOUT_FILENO);
+		ft_putstr_fd(argv[0], STDOUT_FILENO);
+		ft_putstr_fd(" [server pid] [string]\n", \
 		STDERR_FILENO);
 		exit(1);
 	}

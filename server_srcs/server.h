@@ -6,7 +6,7 @@
 /*   By: jvan-kra <jvan-kra@student.42.fr>            +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2021/12/16 15:36:02 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/01/25 17:46:53 by jvan-kra      ########   odam.nl         */
+/*   Updated: 2022/01/25 21:08:02 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # include <stdlib.h>
 
 # ifndef BUFFER_SIZE
-#  define BUFFER_SIZE 1000
+#  define BUFFER_SIZE 1
 # endif
 
 void	ft_bzero(void *s, size_t n);
