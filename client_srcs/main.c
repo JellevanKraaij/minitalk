@@ -6,7 +6,7 @@
 /*   By: jvan-kra <jvan-kra@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/01/19 15:14:56 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/01/26 19:49:37 by jvan-kra      ########   odam.nl         */
+/*   Updated: 2022/01/26 19:54:38 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,11 +84,14 @@ int	main(int argc, char **argv)
 	}
 	init_signals();
 	sendbyte(pid, argv[2]);
-	while (g_signal_received == 1)
+	while (1)
 	{
 		g_signal_received = 0;
 		sleep(1);
+		if (g_signal_received == 0)
+		{
+			ft_putstr_fd("error timeout occurred\n", STDERR_FILENO);
+			exit(1);
+		}
 	}
-	ft_putstr_fd("error timeout occurred\n", STDERR_FILENO);
-	exit(1);
 }
