@@ -6,21 +6,29 @@
 /*   By: jvan-kra <jvan-kra@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2022/01/19 15:14:56 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/01/26 19:54:38 by jvan-kra      ########   odam.nl         */
+/*   Updated: 2022/01/26 20:21:36 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "client.h"
 
-volatile int8_t	g_signal_received = 1;
+volatile static int8_t	g_signal_received;
 
 void	pidcheck(int check)
 {
+	static int8_t	firsttime = 1;
+
 	if (check == -1)
 	{
-		ft_putstr_fd("pid error, check if pid is correct\n", STDERR_FILENO);
+		if (firsttime)
+			ft_putstr_fd("pid error, check if server pid is correct\n", \
+			STDERR_FILENO);
+		else
+			ft_putstr_fd("pid error, check if server is still running\n", \
+			STDERR_FILENO);
 		exit(1);
 	}
+	firsttime = 0;
 }
 
 void	sendbyte(int pid, const char *str)
@@ -82,6 +90,7 @@ int	main(int argc, char **argv)
 		STDERR_FILENO);
 		exit(1);
 	}
+	pidcheck(kill(pid, 0));
 	init_signals();
 	sendbyte(pid, argv[2]);
 	while (1)

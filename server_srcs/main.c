@@ -6,13 +6,13 @@
 /*   By: jvan-kra <jvan-kra@student.42.fr>            +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2021/12/16 18:45:49 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/01/26 19:48:20 by jvan-kra      ########   odam.nl         */
+/*   Updated: 2022/01/26 20:06:17 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server.h"
 
-volatile t_state	g_state;
+volatile static t_state	g_state;
 
 int	decodesig(int signal, char *ret)
 {
