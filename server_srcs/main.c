@@ -6,61 +6,83 @@
 /*   By: jvan-kra <jvan-kra@student.42.fr>            +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2021/12/16 18:45:49 by jvan-kra      #+#    #+#                 */
-/*   Updated: 2022/01/25 21:36:02 by jvan-kra      ########   odam.nl         */
+/*   Updated: 2022/01/26 19:48:20 by jvan-kra      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server.h"
 
-volatile char	*g_recstr;
+volatile t_state	g_state;
 
-void	decodesig(int signal, uint8_t bitcnt, size_t strcnt)
+int	decodesig(int signal, char *ret)
 {
+	static char		buf;
+	static int		bitcnt;
+
+	if (ret == NULL)
+	{
+		bitcnt = 0;
+		return (1);
+	}
 	if (signal == SIGUSR1)
-		g_recstr[strcnt] &= ~(1 << bitcnt);
+		buf &= ~(1 << bitcnt);
 	else if (signal == SIGUSR2)
-		g_recstr[strcnt] |= 1 << bitcnt;
+		buf |= 1 << bitcnt;
+	bitcnt++;
+	if (bitcnt > 7)
+	{
+		*ret = buf;
+		bitcnt = 0;
+		return (1);
+	}
+	return (0);
+}
+
+int	printchar(char rchar)
+{
+	static size_t	strcnt;
+	static char		*buffer;
+
+	if (buffer == NULL)
+		buffer = malloc(BUFFER_SIZE);
+	if (buffer == NULL)
+		exit(1);
+	buffer[strcnt] = rchar;
+	if (strcnt > BUFFER_SIZE - 1)
+	{
+		write(STDOUT_FILENO, buffer, strcnt + 1);
+		strcnt = 0;
+		return (0);
+	}
+	if (buffer[strcnt] == 0)
+	{
+		write(STDOUT_FILENO, buffer, strcnt);
+		strcnt = 0;
+		free(buffer);
+		buffer = NULL;
+		return (1);
+	}
+	strcnt++;
+	return (0);
 }
 
 void	sighandler(int signal, siginfo_t *info, void *context)
 {
-	volatile static int		bitcnt;
-	volatile static size_t	strcnt;
+	char	rchar;
 
 	(void)context;
-	decodesig(signal, bitcnt, strcnt);
-	bitcnt++;
-	if (bitcnt > 7)
-	{
-		bitcnt = 0;
-		if (strcnt > BUFFER_SIZE - 1)
-		{
-			write(STDOUT_FILENO, (char *)g_recstr, strcnt + 1);
-			strcnt = 0;
-		}
-		else if (g_recstr[strcnt] == 0)
-		{
-			write(STDOUT_FILENO, (char *)g_recstr, strcnt);
-			strcnt = 0;
-		}
-		else
-			strcnt++;
-	}
+	g_state.sigrec = 1;
+	g_state.idle = 0;
+	if (decodesig(signal, &rchar) && printchar(rchar))
+		g_state.idle = 1;
 	if (kill(info->si_pid, SIGUSR1) == -1)
 	{
-		ft_putstr_fd("pid error, check if pid is correct\n", STDERR_FILENO);
-		free(g_recstr);
-		exit(1);
+		decodesig(0, NULL);
+		printchar(0);
+		ft_putstr_fd("\nclient exited, flushed buffer\n", \
+		STDERR_FILENO);
+		g_state.idle = 1;
 	}
-}
-
-void	printpid(char *filename)
-{
-	ft_putstr_fd("[", STDOUT_FILENO);
-	ft_putstr_fd(filename, STDOUT_FILENO);
-	ft_putstr_fd("] pid = ", STDOUT_FILENO);
-	ft_putnbr_fd(getpid(), STDOUT_FILENO);
-	ft_putstr_fd("\n", STDOUT_FILENO);
 }
 
 void	init_signals(void)
@@ -81,13 +103,24 @@ int	main(int argc, char **argv)
 		ft_putstr_fd("input error usage ./server (no params)", STDERR_FILENO);
 		exit(1);
 	}
-	printpid(argv[0]);
-	g_recstr = malloc(BUFFER_SIZE);
-	if (g_recstr == NULL)
-		exit(1);
+	ft_putstr_fd("[", STDOUT_FILENO);
+	ft_putstr_fd(argv[0], STDOUT_FILENO);
+	ft_putstr_fd("] pid = ", STDOUT_FILENO);
+	ft_putnbr_fd(getpid(), STDOUT_FILENO);
+	ft_putstr_fd("\n", STDOUT_FILENO);
+	g_state.idle = 1;
 	init_signals();
 	while (1)
 	{
-		sleep(100);
+		g_state.sigrec = 0;
+		sleep(1);
+		if (g_state.sigrec == 0 && g_state.idle == 0)
+		{
+			decodesig(0, NULL);
+			printchar(0);
+			ft_putstr_fd("\nerror timeout occurred flushed buffer\n", \
+			STDERR_FILENO);
+			g_state.idle = 1;
+		}
 	}
 }
